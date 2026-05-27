@@ -1,0 +1,19 @@
+{
+    "name": "abap-ai-sdk",
+    "version": "1.0.0",
+    "description": "ABAP SDK for integrating Large Language Models (LLMs) into SAP systems",
+    "license": "MIT",
+    "author": "Furkan Cosgun",
+    "homepage": "https://github.com/furkancosgun/abap-ai-sdk",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/furkancosgun/abap-ai-sdk"
+    },
+    "scripts": {
+        "lint": "abaplint"
+    },
+    "devDependencies": {
+        "@abaplint/runtime": "^2.12.3",
+        "@abaplint/transpiler-cli": "^2.12.3"
+    }
+}
