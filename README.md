@@ -62,7 +62,7 @@ DATA(lo_agent) = zcl_ai_agent_factory=>create_openai(
 | `zcl_ai_sql_tool` | `execute_sql` | `iv_query` | Dynamic SQL SELECT query execution |
 | `zcl_ai_read_src_tool` | `read_source` | `iv_object_type`, `iv_object_name` | Read ABAP source code by type + name |
 | `zcl_ai_table_def_tool` | `get_table_definition` | `iv_table_name` | Returns DDIC table field metadata via `DDIF_FIELDINFO_GET` |
-| `zcl_ai_syntax_check_tool` | `syntax_check` | `iv_source`, `iv_object_type?`, `iv_object_name?` | Validates ABAP source code syntax |
+| `zcl_ai_syntax_check_tool` | `syntax_check` | `iv_source`, `iv_program` | Validates ABAP source code syntax |
 | `zcl_ai_where_used_tool` | `where_used` | `iv_object_type`, `iv_object_name` | Cross-reference search via `RS_EU_CROSSREF` |
 | `zcl_ai_dependencies_tool` | `get_dependencies` | `iv_object_type`, `iv_object_name` | Returns object dependencies |
 | `zcl_ai_unit_test_tool` | `run_unit_tests` | `iv_object_type`, `iv_object_name` | Run AUNIT unit tests |
@@ -94,8 +94,8 @@ DATA(lo_agent) = zcl_ai_agent_factory=>create_openai(
 | Class | Tool Name | Parameters | Description |
 |-------|-----------|------------|-------------|
 | `zcl_ai_user_detail_tool` | `get_user_detail` | `iv_username` | SAP user details via `BAPI_USER_GET_DETAIL` |
-| `zcl_ai_mail_tool` | `send_mail` | `iv_to`, `iv_subject`, `iv_body`, `iv_cc?`, `iv_bcc?`, `iv_sender?` | Sends email via `SO_DOCUMENT_SEND_API1` |
-| `zcl_ai_ext_api_tool` | `call_external_api` | `iv_url`, `iv_method?`, `iv_body?`, `iv_headers?` | Calls external HTTP APIs |
+| `zcl_ai_mail_tool` | `send_mail` | `iv_subject`, `iv_body`, `it_to`, `it_cc?`, `it_bcc?`, `iv_sender?` | Sends email via SAP mail system |
+| `zcl_ai_ext_api_tool` | `call_external_api` | `iv_url`, `iv_method?`, `iv_body?`, `it_headers?` | Calls external HTTP APIs |
 
 **Transaction & Commit**
 
