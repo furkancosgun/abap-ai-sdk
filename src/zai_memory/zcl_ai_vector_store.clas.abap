@@ -9,11 +9,11 @@ CLASS zcl_ai_vector_store DEFINITION PUBLIC FINAL CREATE PUBLIC.
       END OF ty_s_chunk.
     TYPES ty_t_chunks TYPE STANDARD TABLE OF ty_s_chunk WITH EMPTY KEY.
     TYPES:
-        BEGIN OF ty_s_result,
+      BEGIN OF ty_s_result,
         id    TYPE string,
         text  TYPE string,
         score TYPE f,
-        END OF ty_s_result.
+      END OF ty_s_result.
     TYPES ty_t_results TYPE STANDARD TABLE OF ty_s_result WITH EMPTY KEY.
 
     METHODS constructor
@@ -54,7 +54,7 @@ CLASS zcl_ai_vector_store IMPLEMENTATION.
   METHOD add.
     DATA ls_chunk TYPE ty_s_chunk.
 
-    ls_chunk-text   = iv_text.
+    ls_chunk-text = iv_text.
     IF it_vector IS NOT INITIAL.
       ls_chunk-vector = it_vector.
     ELSE.
@@ -71,7 +71,7 @@ CLASS zcl_ai_vector_store IMPLEMENTATION.
 
     lt_query_vec = mo_embedding->embed( iv_query ).
 
-    LOOP AT mt_chunks INTO <fs_chunk>.
+    LOOP AT mt_chunks ASSIGNING <fs_chunk>.
       ls_result-text  = <fs_chunk>-text.
       ls_result-score = cosine_similarity( it_vector_a = lt_query_vec
                                            it_vector_b = <fs_chunk>-vector ).
@@ -101,8 +101,8 @@ CLASS zcl_ai_vector_store IMPLEMENTATION.
     DATA lv_norm_a TYPE f VALUE 0.
     DATA lv_norm_b TYPE f VALUE 0.
 
-    FIELD-SYMBOLS: <fs_a> LIKE LINE OF it_vector_a,
-                   <fs_b> LIKE LINE OF it_vector_b.
+    FIELD-SYMBOLS <fs_a> LIKE LINE OF it_vector_a.
+    FIELD-SYMBOLS <fs_b> LIKE LINE OF it_vector_b.
 
     IF lines( it_vector_b ) <> lines( it_vector_a ).
       rv_score = 0.
@@ -110,7 +110,7 @@ CLASS zcl_ai_vector_store IMPLEMENTATION.
     ENDIF.
 
     LOOP AT it_vector_a ASSIGNING <fs_a>.
-      READ TABLE it_vector_b INDEX sy-tabix ASSIGNING <fs_b>.
+      ASSIGN it_vector_b[ sy-tabix ] TO <fs_b>.
       IF sy-subrc = 0.
         lv_dot    = lv_dot + ( <fs_a> * <fs_b> ).
         lv_norm_a = lv_norm_a + ( <fs_a> ** 2 ).

@@ -96,8 +96,7 @@ CLASS zcl_ai_agent IMPLEMENTATION.
       ENDTRY.
     ENDDO.
 
-    ro_message = NEW zcl_ai_assistant_message(
-      'Agent failed: Maximum tool rounds reached without resolving the task.' ).
+    ro_message = NEW zcl_ai_assistant_message( 'Agent failed: Maximum tool rounds reached without resolving the task.' ).
     mo_memory->add( ro_message ).
   ENDMETHOD.
 ENDCLASS.
