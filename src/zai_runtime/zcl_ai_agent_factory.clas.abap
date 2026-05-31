@@ -3,6 +3,19 @@ CLASS zcl_ai_agent_factory DEFINITION
   CREATE PRIVATE.
 
   PUBLIC SECTION.
+    CLASS-METHODS create
+      IMPORTING io_provider        TYPE REF TO zif_ai_provider OPTIONAL
+                io_pipeline        TYPE REF TO zcl_ai_pipeline OPTIONAL
+                io_tool_registry   TYPE REF TO zif_ai_tool_registry OPTIONAL
+                it_tools           TYPE string_table OPTIONAL
+                io_memory          TYPE REF TO zif_ai_memory_store OPTIONAL
+                io_memory_strategy TYPE REF TO zif_ai_memory_strategy OPTIONAL
+                iv_system_prompt   TYPE string OPTIONAL
+                it_middlewares     TYPE zif_ai_middleware=>ty_t_middlewares OPTIONAL
+                iv_max_tool_round  TYPE i DEFAULT 10
+      RETURNING VALUE(ro_agent)    TYPE REF TO zif_ai_agent
+      RAISING   zcx_ai_error.
+
     CLASS-METHODS create_openai
       IMPORTING iv_api_key       TYPE string
                 iv_model         TYPE string       DEFAULT 'gpt-4o'
@@ -40,33 +53,60 @@ CLASS zcl_ai_agent_factory DEFINITION
                 it_tools         TYPE string_table OPTIONAL
       RETURNING VALUE(ro_agent)  TYPE REF TO zif_ai_agent
       RAISING   zcx_ai_error.
-
-  PRIVATE SECTION.
-    CLASS-METHODS build_agent
-      IMPORTING io_provider      TYPE REF TO zif_ai_provider
-                it_tools         TYPE string_table OPTIONAL
-                iv_system_prompt TYPE string
-      RETURNING VALUE(ro_agent)  TYPE REF TO zif_ai_agent
-      RAISING   zcx_ai_error.
 ENDCLASS.
 
 
 CLASS zcl_ai_agent_factory IMPLEMENTATION.
-  METHOD build_agent.
-    DATA lo_registry TYPE REF TO zif_ai_tool_registry.
-    DATA lo_memory   TYPE REF TO zif_ai_memory_store.
-    DATA lo_pipeline TYPE REF TO zcl_ai_pipeline.
+  METHOD create.
+    DATA lo_registry    TYPE REF TO zif_ai_tool_registry.
+    DATA lo_memory      TYPE REF TO zif_ai_memory_store.
+    DATA lo_strategy    TYPE REF TO zif_ai_memory_strategy.
+    DATA lo_pipeline    TYPE REF TO zcl_ai_pipeline.
+    DATA ls_middlewares TYPE zif_ai_middleware=>ty_t_middlewares.
+    DATA lo_mw          TYPE REF TO zif_ai_middleware.
 
-    lo_memory = NEW zcl_ai_memory_store( NEW zcl_ai_noop_memory( ) ).
-    lo_memory->add( NEW zcl_ai_system_message( iv_system_prompt ) ).
-    lo_registry = NEW zcl_ai_tool_registry( ).
-    lo_registry->add_all( it_tools ).
-    lo_pipeline = NEW zcl_ai_pipeline( ).
+    IF io_provider IS NOT BOUND.
+      zcx_ai_error=>raise( 'Provider is required to create an agent' ).
+    ENDIF.
 
-    ro_agent = NEW zcl_ai_agent( io_provider      = io_provider
-                                 io_tool_registry = lo_registry
-                                 io_memory        = lo_memory
-                                 io_pipeline      = lo_pipeline ).
+    IF io_memory IS BOUND.
+      lo_memory = io_memory.
+    ELSE.
+      IF io_memory_strategy IS BOUND.
+        lo_strategy = io_memory_strategy.
+      ELSE.
+        lo_strategy = NEW zcl_ai_noop_memory( ).
+      ENDIF.
+      lo_memory = NEW zcl_ai_memory_store( lo_strategy ).
+    ENDIF.
+
+    IF iv_system_prompt IS NOT INITIAL.
+      lo_memory->add( NEW zcl_ai_system_message( iv_system_prompt ) ).
+    ENDIF.
+
+    IF io_tool_registry IS BOUND.
+      lo_registry = io_tool_registry.
+    ELSE.
+      lo_registry = NEW zcl_ai_tool_registry( ).
+      IF it_tools IS SUPPLIED.
+        lo_registry->add_all( it_tools ).
+      ENDIF.
+    ENDIF.
+
+    IF io_pipeline IS BOUND.
+      lo_pipeline = io_pipeline.
+    ELSE.
+      LOOP AT it_middlewares INTO lo_mw.
+        APPEND lo_mw TO ls_middlewares.
+      ENDLOOP.
+      lo_pipeline = NEW zcl_ai_pipeline( ls_middlewares ).
+    ENDIF.
+
+    ro_agent = NEW zcl_ai_agent( io_provider       = io_provider
+                                 io_tool_registry  = lo_registry
+                                 io_memory         = lo_memory
+                                 io_pipeline       = lo_pipeline
+                                 iv_max_tool_round = iv_max_tool_round ).
   ENDMETHOD.
 
   METHOD create_openai.
@@ -81,9 +121,9 @@ CLASS zcl_ai_agent_factory IMPLEMENTATION.
                                               iv_model   = iv_model
                                               iv_api_key = iv_api_key ).
 
-    ro_agent = build_agent( io_provider      = lo_provider
-                            it_tools         = it_tools
-                            iv_system_prompt = iv_system_prompt ).
+    ro_agent = create( io_provider      = lo_provider
+                       it_tools         = it_tools
+                       iv_system_prompt = iv_system_prompt ).
   ENDMETHOD.
 
   METHOD create_gemini.
@@ -98,9 +138,9 @@ CLASS zcl_ai_agent_factory IMPLEMENTATION.
                                               iv_model   = iv_model
                                               iv_api_key = iv_api_key ).
 
-    ro_agent = build_agent( io_provider      = lo_provider
-                            it_tools         = it_tools
-                            iv_system_prompt = iv_system_prompt ).
+    ro_agent = create( io_provider      = lo_provider
+                       it_tools         = it_tools
+                       iv_system_prompt = iv_system_prompt ).
   ENDMETHOD.
 
   METHOD create_anthropic.
@@ -115,9 +155,9 @@ CLASS zcl_ai_agent_factory IMPLEMENTATION.
                                                  iv_model   = iv_model
                                                  iv_api_key = iv_api_key ).
 
-    ro_agent = build_agent( io_provider      = lo_provider
-                            it_tools         = it_tools
-                            iv_system_prompt = iv_system_prompt ).
+    ro_agent = create( io_provider      = lo_provider
+                       it_tools         = it_tools
+                       iv_system_prompt = iv_system_prompt ).
   ENDMETHOD.
 
   METHOD create_ollama.
@@ -127,14 +167,13 @@ CLASS zcl_ai_agent_factory IMPLEMENTATION.
 
     lo_http = NEW zcl_ai_onprem_http_client( iv_base_url = iv_base_url ).
     lo_format = NEW zcl_ai_openai_formatter( ).
-
     lo_provider = NEW zcl_ai_ollama_provider( io_client = lo_http
                                               io_format = lo_format
                                               iv_model  = iv_model ).
 
-    ro_agent = build_agent( io_provider      = lo_provider
-                            it_tools         = it_tools
-                            iv_system_prompt = iv_system_prompt ).
+    ro_agent = create( io_provider      = lo_provider
+                       it_tools         = it_tools
+                       iv_system_prompt = iv_system_prompt ).
   ENDMETHOD.
 
   METHOD create_default.
