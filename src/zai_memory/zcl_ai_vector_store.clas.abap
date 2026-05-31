@@ -27,6 +27,7 @@ CLASS zcl_ai_vector_store DEFINITION PUBLIC FINAL CREATE PUBLIC.
     METHODS search
       IMPORTING iv_query          TYPE string
                 iv_top_k          TYPE i DEFAULT 5
+                iv_threshold      TYPE f DEFAULT 0
       RETURNING VALUE(rv_context) TYPE string
       RAISING   zcx_ai_error.
 
@@ -75,7 +76,9 @@ CLASS zcl_ai_vector_store IMPLEMENTATION.
       ls_result-text  = <fs_chunk>-text.
       ls_result-score = cosine_similarity( it_vector_a = lt_query_vec
                                            it_vector_b = <fs_chunk>-vector ).
-      APPEND ls_result TO lt_results.
+      IF ls_result-score >= iv_threshold.
+        APPEND ls_result TO lt_results.
+      ENDIF.
     ENDLOOP.
 
     SORT lt_results BY score DESCENDING.

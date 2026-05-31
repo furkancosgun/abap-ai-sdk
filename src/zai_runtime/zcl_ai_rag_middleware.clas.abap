@@ -4,16 +4,19 @@ CLASS zcl_ai_rag_middleware DEFINITION PUBLIC FINAL CREATE PUBLIC.
     INTERFACES zif_ai_middleware.
 
     METHODS constructor
-      IMPORTING io_vector_store TYPE REF TO zcl_ai_vector_store.
+      IMPORTING io_vector_store TYPE REF TO zcl_ai_vector_store
+                iv_threshold    TYPE f DEFAULT 0.
 
   PRIVATE SECTION.
     DATA mo_vector_store TYPE REF TO zcl_ai_vector_store.
+    DATA mv_threshold    TYPE f.
 ENDCLASS.
 
 
 CLASS zcl_ai_rag_middleware IMPLEMENTATION.
   METHOD constructor.
     mo_vector_store = io_vector_store.
+    mv_threshold    = iv_threshold.
   ENDMETHOD.
 
   METHOD zif_ai_middleware~before.
@@ -36,7 +39,9 @@ CLASS zcl_ai_rag_middleware IMPLEMENTATION.
     ENDIF.
 
     TRY.
-        lv_context = mo_vector_store->search( lv_query ).
+        lv_context = mo_vector_store->search(
+          iv_query     = lv_query
+          iv_threshold = mv_threshold ).
       CATCH cx_root.
         RETURN.
     ENDTRY.
@@ -50,5 +55,6 @@ CLASS zcl_ai_rag_middleware IMPLEMENTATION.
   ENDMETHOD.
 
   METHOD zif_ai_middleware~after.
+    ASSERT io_context IS BOUND.
   ENDMETHOD.
 ENDCLASS.
