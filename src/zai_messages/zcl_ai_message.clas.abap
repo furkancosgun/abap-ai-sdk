@@ -19,6 +19,9 @@ CLASS zcl_ai_message DEFINITION
     METHODS get_content
       RETURNING VALUE(rv_content) TYPE string.
 
+    METHODS set_content
+      IMPORTING iv_content TYPE string.
+
   PROTECTED SECTION.
 
   PRIVATE SECTION.
@@ -37,6 +40,10 @@ CLASS zcl_ai_message IMPLEMENTATION.
 
   METHOD get_content.
     rv_content = mv_content.
+  ENDMETHOD.
+
+  METHOD set_content.
+    mv_content = iv_content.
   ENDMETHOD.
 
   METHOD get_name.
