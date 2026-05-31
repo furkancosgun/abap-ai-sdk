@@ -1,5 +1,4 @@
 CLASS zcl_ai_openai_embedding DEFINITION PUBLIC FINAL CREATE PUBLIC.
-
   PUBLIC SECTION.
     INTERFACES zif_ai_embedding.
 
