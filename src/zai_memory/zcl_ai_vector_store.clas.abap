@@ -1,16 +1,13 @@
 CLASS zcl_ai_vector_store DEFINITION PUBLIC FINAL CREATE PUBLIC.
-
   PUBLIC SECTION.
     TYPES:
       BEGIN OF ty_s_chunk,
-        id     TYPE string,
         text   TYPE string,
         vector TYPE zif_ai_embedding=>ty_t_vector,
       END OF ty_s_chunk.
     TYPES ty_t_chunks TYPE STANDARD TABLE OF ty_s_chunk WITH EMPTY KEY.
     TYPES:
       BEGIN OF ty_s_result,
-        id    TYPE string,
         text  TYPE string,
         score TYPE f,
       END OF ty_s_result.
@@ -83,7 +80,11 @@ CLASS zcl_ai_vector_store IMPLEMENTATION.
 
     SORT lt_results BY score DESCENDING.
 
-    LOOP AT lt_results INTO ls_result TO iv_top_k.
+    LOOP AT lt_results INTO ls_result.
+      IF sy-tabix > iv_top_k.
+        EXIT.
+      ENDIF.
+
       IF rv_context IS NOT INITIAL.
         rv_context = |{ rv_context }\n\n---\n|.
       ENDIF.
