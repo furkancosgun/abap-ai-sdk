@@ -1,6 +1,6 @@
 # ABAP AI SDK
 
-ABAP framework for integrating Large Language Models (LLMs) into SAP systems. Supports OpenAI, Gemini, Anthropic (Claude), and Ollama with a pluggable tool system.
+ABAP framework for integrating Large Language Models (LLMs) into SAP systems. Supports OpenAI, Gemini, Anthropic (Claude), and Ollama with a pluggable tool system and RAG support.
 
 ## Quick Start
 
@@ -15,12 +15,12 @@ DATA(lo_response) = lo_agent->execute( 'List all users in table USR01.' ).
 ## Architecture
 
 ```
-zai_core         Interfaces (provider, tool, agent, memory, middleware, http_client)
+zai_core         Interfaces (provider, tool, agent, memory, middleware, http_client, embedding)
 zai_common       Shared utilities (serializer, error class)
-zai_runtime      Agent, pipeline, context, middleware implementations
-zai_memory       Memory store & strategies
+zai_runtime      Agent, pipeline, context, middleware, factory implementations
+zai_memory       Memory store, strategies, vector store
 zai_messages     Message types (system, user, assistant, tool)
-zai_providers    LLM providers & HTTP client
+zai_providers    LLM providers, HTTP client, embedding implementations
 zai_tools        Tool implementations
 zai_tool_ext     Provider-specific tool formatters
 ```
@@ -36,6 +36,45 @@ zai_tool_ext     Provider-specific tool formatters
 | Default (Ollama) | `create_default` | `gemma4:latest` |
 
 OpenAI-compatible provider also works with Mistral, DeepSeek, Groq — just pass the appropriate `base_url` and model.
+
+## Agent Factory
+
+The `zcl_ai_agent_factory` provides a main `create` method accepting all dependencies as optional parameters. Any omitted dependency is auto-created with sensible defaults:
+
+| Parameter | Default If Omitted |
+|-----------|-------------------|
+| `io_provider` | **Required** — raises error |
+| `io_pipeline` | New pipeline with no middlewares |
+| `io_tool_registry` / `it_tools` | Empty registry |
+| `io_memory` / `io_memory_strategy` | `zcl_ai_noop_memory` strategy |
+| `iv_system_prompt` | No system message added |
+| `it_middlewares` | Pipeline receives no middlewares |
+| `iv_max_tool_round` | 10 |
+
+```abap
+" Full control — pass everything explicitly
+DATA(lo_agent) = zcl_ai_agent_factory=>create(
+  io_provider        = lo_provider
+  io_pipeline        = lo_pipeline
+  it_tools           = VALUE #( ( 'ZCL_AI_SQL_TOOL' ) )
+  io_memory          = lo_memory
+  iv_system_prompt   = 'You are an SAP expert.'
+  it_middlewares     = VALUE #( ( NEW zcl_ai_logging_middleware( ) ) )
+  iv_max_tool_round  = 5 ).
+```
+
+Convenience methods (`create_openai`, `create_gemini`, etc.) also accept the same optional parameters:
+
+```abap
+DATA(lo_agent) = zcl_ai_agent_factory=>create_openai(
+  iv_api_key         = 'sk-...'
+  iv_model           = 'gpt-4o'
+  it_tools           = VALUE #( ( 'ZCL_AI_SQL_TOOL' ) )
+  iv_system_prompt   = 'You are an SAP assistant.'
+  io_pipeline        = lo_pipeline
+  it_middlewares     = VALUE #( ( NEW zcl_ai_logging_middleware( ) ) )
+  iv_max_tool_round  = 3 ).
+```
 
 ## Tools
 
@@ -132,19 +171,110 @@ ENDCLASS.
 
 Schema is auto-generated from constructor parameters — no manual schema code needed.
 
+## RAG (Retrieval-Augmented Generation)
+
+The SDK provides a complete RAG pipeline for grounding LLM responses with custom data.
+
+### Embedding
+
+Embedding models convert text to vector representations. Supported implementations:
+
+| Class | Provider | Default Model |
+|-------|----------|---------------|
+| `zcl_ai_ollama_embedding` | Ollama (local) | `nomic-embed-text:latest` |
+| `zcl_ai_openai_embedding` | OpenAI | `text-embedding-3-small` |
+| `zcl_ai_gemini_embedding` | Google Gemini | `text-embedding-004` |
+
+All implement `zif_ai_embedding` with a single `embed( iv_text )` method returning `ty_t_vector` (table of floats).
+
+### Embedding Factory
+
+```abap
+DATA(lo_emb) = zcl_ai_embedding_factory=>create_openai(
+  io_client  = lo_http
+  iv_api_key = 'sk-...'
+  iv_model   = 'text-embedding-3-small' ).
+```
+
+Provider type constants are available via `mc_provider`:
+- `zcl_ai_embedding_factory=>mc_provider-ollama`
+- `zcl_ai_embedding_factory=>mc_provider-openai`
+- `zcl_ai_embedding_factory=>mc_provider-gemini`
+
+### Vector Store
+
+```abap
+DATA(lo_store) = NEW zcl_ai_vector_store( lo_emb ).
+
+" Add chunks (embedding auto-generated)
+lo_store->add( 'SAP S/4HANA Cloud is a cloud-based ERP.' ).
+lo_store->add( 'ABAP is the primary programming language for SAP.' ).
+
+" Search with similarity threshold (0.0 = no filter)
+DATA(lv_context) = lo_store->search(
+  iv_query     = 'SAP programming'
+  iv_top_k     = 3
+  iv_threshold = '0.5' ).
+```
+
+### RAG Middleware
+
+The `zcl_ai_rag_middleware` hooks into the pipeline, retrieves relevant context before each user message, and injects it into the message content.
+
+```abap
+" Build vector store
+DATA(lo_emb)   = zcl_ai_embedding_factory=>create_ollama( io_client = lo_http ).
+DATA(lo_store) = NEW zcl_ai_vector_store( lo_emb ).
+lo_store->add( 'Your knowledge base text here...' ).
+
+" Attach to pipeline
+DATA(lo_pipeline) = NEW zcl_ai_pipeline( ).
+lo_pipeline->add( NEW zcl_ai_rag_middleware(
+  io_vector_store = lo_store
+  iv_threshold    = '0.7' ) ).
+
+" Build agent with RAG
+DATA(lo_agent) = zcl_ai_agent_factory=>create(
+  io_provider = lo_provider
+  io_pipeline = lo_pipeline ).
+```
+
+The middleware:
+1. Finds the last user message in the conversation
+2. Queries the vector store with cosine similarity
+3. Prepends retrieved context to the user message content
+4. Passes the augmented message to the LLM
+
 ## Advanced Usage
 
 ```abap
 " Direct construction without factory
 DATA(lo_http) = NEW zcl_ai_onprem_http_client(
   iv_base_url = 'https://api.openai.com' ).
+DATA(lo_format) = NEW zcl_ai_openai_formatter( ).
 DATA(lo_provider) = NEW zcl_ai_openai_provider(
   io_client  = lo_http
-  io_format  = NEW zcl_ai_openai_formatter( )
+  io_format  = lo_format
   iv_model   = 'gpt-4o'
   iv_api_key = 'sk-...' ).
+
+DATA(lo_registry) = NEW zcl_ai_tool_registry( ).
+lo_registry->add_all( VALUE #( ( 'ZCL_AI_SQL_TOOL' ) ) ).
+
+DATA(lo_memory) = NEW zcl_ai_memory_store(
+  NEW zcl_ai_window_memory( iv_window = 20 ) ).
+lo_memory->add( NEW zcl_ai_system_message(
+  'You are an SAP expert.' ) ).
+
+DATA(lo_pipeline) = NEW zcl_ai_pipeline( ).
+lo_pipeline->add( NEW zcl_ai_logging_middleware( ) ).
+
 DATA(lo_agent) = NEW zcl_ai_agent(
-  io_provider = lo_provider ).
+  io_provider      = lo_provider
+  io_tool_registry = lo_registry
+  io_memory        = lo_memory
+  io_pipeline      = lo_pipeline
+  iv_max_tool_round = 10 ).
 ```
 
 ### Middleware
@@ -154,7 +284,7 @@ DATA(lo_pipeline) = NEW zcl_ai_pipeline( ).
 lo_pipeline->add( NEW zcl_ai_logging_middleware( ) ).
 lo_pipeline->add( NEW zcl_ai_timer_middleware( ) ).
 
-DATA(lo_agent) = NEW zcl_ai_agent(
+DATA(lo_agent) = zcl_ai_agent_factory=>create(
   io_provider = lo_provider
   io_pipeline = lo_pipeline ).
 ```
