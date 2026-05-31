@@ -4,54 +4,84 @@ CLASS zcl_ai_agent_factory DEFINITION
 
   PUBLIC SECTION.
     CLASS-METHODS create
-      IMPORTING io_provider        TYPE REF TO zif_ai_provider OPTIONAL
-                io_pipeline        TYPE REF TO zcl_ai_pipeline OPTIONAL
-                io_tool_registry   TYPE REF TO zif_ai_tool_registry OPTIONAL
-                it_tools           TYPE string_table OPTIONAL
-                io_memory          TYPE REF TO zif_ai_memory_store OPTIONAL
-                io_memory_strategy TYPE REF TO zif_ai_memory_strategy OPTIONAL
-                iv_system_prompt   TYPE string OPTIONAL
+      IMPORTING io_provider        TYPE REF TO zif_ai_provider
+                io_pipeline        TYPE REF TO zcl_ai_pipeline              OPTIONAL
+                io_tool_registry   TYPE REF TO zif_ai_tool_registry         OPTIONAL
+                it_tools           TYPE string_table                        OPTIONAL
+                io_memory          TYPE REF TO zif_ai_memory_store          OPTIONAL
+                io_memory_strategy TYPE REF TO zif_ai_memory_strategy       OPTIONAL
+                iv_system_prompt   TYPE string                              OPTIONAL
                 it_middlewares     TYPE zif_ai_middleware=>ty_t_middlewares OPTIONAL
-                iv_max_tool_round  TYPE i DEFAULT 10
+                iv_max_tool_round  TYPE i                                   DEFAULT 10
       RETURNING VALUE(ro_agent)    TYPE REF TO zif_ai_agent
       RAISING   zcx_ai_error.
 
     CLASS-METHODS create_openai
-      IMPORTING iv_api_key       TYPE string
-                iv_model         TYPE string       DEFAULT 'gpt-4o'
-                it_tools         TYPE string_table OPTIONAL
-                iv_system_prompt TYPE string       DEFAULT 'You are a helpful AI assistant.'
-      RETURNING VALUE(ro_agent)  TYPE REF TO zif_ai_agent
+      IMPORTING iv_api_key         TYPE string
+                iv_model           TYPE string                              DEFAULT 'gpt-4o'
+                it_tools           TYPE string_table                        OPTIONAL
+                iv_system_prompt   TYPE string                              DEFAULT 'You are a helpful AI assistant.'
+                io_pipeline        TYPE REF TO zcl_ai_pipeline              OPTIONAL
+                io_tool_registry   TYPE REF TO zif_ai_tool_registry         OPTIONAL
+                io_memory          TYPE REF TO zif_ai_memory_store          OPTIONAL
+                io_memory_strategy TYPE REF TO zif_ai_memory_strategy       OPTIONAL
+                it_middlewares     TYPE zif_ai_middleware=>ty_t_middlewares OPTIONAL
+                iv_max_tool_round  TYPE i                                   DEFAULT 10
+      RETURNING VALUE(ro_agent)    TYPE REF TO zif_ai_agent
       RAISING   zcx_ai_error.
 
     CLASS-METHODS create_gemini
-      IMPORTING iv_api_key       TYPE string
-                iv_model         TYPE string       DEFAULT 'gemini-2.0-flash'
-                it_tools         TYPE string_table OPTIONAL
-                iv_system_prompt TYPE string       DEFAULT 'You are a helpful AI assistant.'
-      RETURNING VALUE(ro_agent)  TYPE REF TO zif_ai_agent
+      IMPORTING iv_api_key         TYPE string
+                iv_model           TYPE string                              DEFAULT 'gemini-2.0-flash'
+                it_tools           TYPE string_table                        OPTIONAL
+                iv_system_prompt   TYPE string                              DEFAULT 'You are a helpful AI assistant.'
+                io_pipeline        TYPE REF TO zcl_ai_pipeline              OPTIONAL
+                io_tool_registry   TYPE REF TO zif_ai_tool_registry         OPTIONAL
+                io_memory          TYPE REF TO zif_ai_memory_store          OPTIONAL
+                io_memory_strategy TYPE REF TO zif_ai_memory_strategy       OPTIONAL
+                it_middlewares     TYPE zif_ai_middleware=>ty_t_middlewares OPTIONAL
+                iv_max_tool_round  TYPE i                                   DEFAULT 10
+      RETURNING VALUE(ro_agent)    TYPE REF TO zif_ai_agent
       RAISING   zcx_ai_error.
 
     CLASS-METHODS create_anthropic
-      IMPORTING iv_api_key       TYPE string
-                iv_model         TYPE string       DEFAULT 'claude-sonnet-4-20250514'
-                it_tools         TYPE string_table OPTIONAL
-                iv_system_prompt TYPE string       DEFAULT 'You are a helpful AI assistant.'
-      RETURNING VALUE(ro_agent)  TYPE REF TO zif_ai_agent
+      IMPORTING iv_api_key         TYPE string
+                iv_model           TYPE string                              DEFAULT 'claude-sonnet-4-20250514'
+                it_tools           TYPE string_table                        OPTIONAL
+                iv_system_prompt   TYPE string                              DEFAULT 'You are a helpful AI assistant.'
+                io_pipeline        TYPE REF TO zcl_ai_pipeline              OPTIONAL
+                io_tool_registry   TYPE REF TO zif_ai_tool_registry         OPTIONAL
+                io_memory          TYPE REF TO zif_ai_memory_store          OPTIONAL
+                io_memory_strategy TYPE REF TO zif_ai_memory_strategy       OPTIONAL
+                it_middlewares     TYPE zif_ai_middleware=>ty_t_middlewares OPTIONAL
+                iv_max_tool_round  TYPE i                                   DEFAULT 10
+      RETURNING VALUE(ro_agent)    TYPE REF TO zif_ai_agent
       RAISING   zcx_ai_error.
 
     CLASS-METHODS create_ollama
-      IMPORTING iv_base_url      TYPE string       DEFAULT 'http://localhost:11434'
-                iv_model         TYPE string       DEFAULT 'llama3.2'
-                it_tools         TYPE string_table OPTIONAL
-                iv_system_prompt TYPE string       DEFAULT 'You are a helpful AI assistant.'
-      RETURNING VALUE(ro_agent)  TYPE REF TO zif_ai_agent
+      IMPORTING iv_base_url        TYPE string                              DEFAULT 'http://localhost:11434'
+                iv_model           TYPE string                              DEFAULT 'llama3.2'
+                it_tools           TYPE string_table                        OPTIONAL
+                iv_system_prompt   TYPE string                              DEFAULT 'You are a helpful AI assistant.'
+                io_pipeline        TYPE REF TO zcl_ai_pipeline              OPTIONAL
+                io_tool_registry   TYPE REF TO zif_ai_tool_registry         OPTIONAL
+                io_memory          TYPE REF TO zif_ai_memory_store          OPTIONAL
+                io_memory_strategy TYPE REF TO zif_ai_memory_strategy       OPTIONAL
+                it_middlewares     TYPE zif_ai_middleware=>ty_t_middlewares OPTIONAL
+                iv_max_tool_round  TYPE i                                   DEFAULT 10
+      RETURNING VALUE(ro_agent)    TYPE REF TO zif_ai_agent
       RAISING   zcx_ai_error.
 
     CLASS-METHODS create_default
-      IMPORTING iv_system_prompt TYPE string       DEFAULT 'You are a helpful AI assistant.'
-                it_tools         TYPE string_table OPTIONAL
-      RETURNING VALUE(ro_agent)  TYPE REF TO zif_ai_agent
+      IMPORTING iv_system_prompt   TYPE string                              DEFAULT 'You are a helpful AI assistant.'
+                it_tools           TYPE string_table                        OPTIONAL
+                io_pipeline        TYPE REF TO zcl_ai_pipeline              OPTIONAL
+                io_tool_registry   TYPE REF TO zif_ai_tool_registry         OPTIONAL
+                io_memory          TYPE REF TO zif_ai_memory_store          OPTIONAL
+                io_memory_strategy TYPE REF TO zif_ai_memory_strategy       OPTIONAL
+                it_middlewares     TYPE zif_ai_middleware=>ty_t_middlewares OPTIONAL
+                iv_max_tool_round  TYPE i                                   DEFAULT 10
+      RETURNING VALUE(ro_agent)    TYPE REF TO zif_ai_agent
       RAISING   zcx_ai_error.
 ENDCLASS.
 
@@ -62,8 +92,8 @@ CLASS zcl_ai_agent_factory IMPLEMENTATION.
     DATA lo_memory      TYPE REF TO zif_ai_memory_store.
     DATA lo_strategy    TYPE REF TO zif_ai_memory_strategy.
     DATA lo_pipeline    TYPE REF TO zcl_ai_pipeline.
-    DATA ls_middlewares TYPE zif_ai_middleware=>ty_t_middlewares.
-    DATA lo_mw          TYPE REF TO zif_ai_middleware.
+    DATA lt_middlewares TYPE zif_ai_middleware=>ty_t_middlewares.
+    FIELD-SYMBOLS <fs_middleware> LIKE LINE OF it_middlewares.
 
     IF io_provider IS NOT BOUND.
       zcx_ai_error=>raise( 'Provider is required to create an agent' ).
@@ -80,7 +110,7 @@ CLASS zcl_ai_agent_factory IMPLEMENTATION.
       lo_memory = NEW zcl_ai_memory_store( lo_strategy ).
     ENDIF.
 
-    IF iv_system_prompt IS NOT INITIAL.
+    IF lo_memory->size( ) = 0 AND iv_system_prompt IS NOT INITIAL.
       lo_memory->add( NEW zcl_ai_system_message( iv_system_prompt ) ).
     ENDIF.
 
@@ -88,7 +118,7 @@ CLASS zcl_ai_agent_factory IMPLEMENTATION.
       lo_registry = io_tool_registry.
     ELSE.
       lo_registry = NEW zcl_ai_tool_registry( ).
-      IF it_tools IS SUPPLIED.
+      IF it_tools IS NOT INITIAL.
         lo_registry->add_all( it_tools ).
       ENDIF.
     ENDIF.
@@ -96,10 +126,10 @@ CLASS zcl_ai_agent_factory IMPLEMENTATION.
     IF io_pipeline IS BOUND.
       lo_pipeline = io_pipeline.
     ELSE.
-      LOOP AT it_middlewares INTO lo_mw.
-        APPEND lo_mw TO ls_middlewares.
+      LOOP AT it_middlewares ASSIGNING <fs_middleware>.
+        APPEND <fs_middleware> TO lt_middlewares.
       ENDLOOP.
-      lo_pipeline = NEW zcl_ai_pipeline( ls_middlewares ).
+      lo_pipeline = NEW zcl_ai_pipeline( lt_middlewares ).
     ENDIF.
 
     ro_agent = NEW zcl_ai_agent( io_provider       = io_provider
@@ -121,9 +151,15 @@ CLASS zcl_ai_agent_factory IMPLEMENTATION.
                                               iv_model   = iv_model
                                               iv_api_key = iv_api_key ).
 
-    ro_agent = create( io_provider      = lo_provider
-                       it_tools         = it_tools
-                       iv_system_prompt = iv_system_prompt ).
+    ro_agent = create( io_provider        = lo_provider
+                       it_tools           = it_tools
+                       iv_system_prompt   = iv_system_prompt
+                       io_pipeline        = io_pipeline
+                       io_tool_registry   = io_tool_registry
+                       io_memory          = io_memory
+                       io_memory_strategy = io_memory_strategy
+                       it_middlewares     = it_middlewares
+                       iv_max_tool_round  = iv_max_tool_round ).
   ENDMETHOD.
 
   METHOD create_gemini.
@@ -138,9 +174,15 @@ CLASS zcl_ai_agent_factory IMPLEMENTATION.
                                               iv_model   = iv_model
                                               iv_api_key = iv_api_key ).
 
-    ro_agent = create( io_provider      = lo_provider
-                       it_tools         = it_tools
-                       iv_system_prompt = iv_system_prompt ).
+    ro_agent = create( io_provider        = lo_provider
+                       it_tools           = it_tools
+                       iv_system_prompt   = iv_system_prompt
+                       io_pipeline        = io_pipeline
+                       io_tool_registry   = io_tool_registry
+                       io_memory          = io_memory
+                       io_memory_strategy = io_memory_strategy
+                       it_middlewares     = it_middlewares
+                       iv_max_tool_round  = iv_max_tool_round ).
   ENDMETHOD.
 
   METHOD create_anthropic.
@@ -155,9 +197,15 @@ CLASS zcl_ai_agent_factory IMPLEMENTATION.
                                                  iv_model   = iv_model
                                                  iv_api_key = iv_api_key ).
 
-    ro_agent = create( io_provider      = lo_provider
-                       it_tools         = it_tools
-                       iv_system_prompt = iv_system_prompt ).
+    ro_agent = create( io_provider        = lo_provider
+                       it_tools           = it_tools
+                       iv_system_prompt   = iv_system_prompt
+                       io_pipeline        = io_pipeline
+                       io_tool_registry   = io_tool_registry
+                       io_memory          = io_memory
+                       io_memory_strategy = io_memory_strategy
+                       it_middlewares     = it_middlewares
+                       iv_max_tool_round  = iv_max_tool_round ).
   ENDMETHOD.
 
   METHOD create_ollama.
@@ -171,14 +219,26 @@ CLASS zcl_ai_agent_factory IMPLEMENTATION.
                                               io_format = lo_format
                                               iv_model  = iv_model ).
 
-    ro_agent = create( io_provider      = lo_provider
-                       it_tools         = it_tools
-                       iv_system_prompt = iv_system_prompt ).
+    ro_agent = create( io_provider        = lo_provider
+                       it_tools           = it_tools
+                       iv_system_prompt   = iv_system_prompt
+                       io_pipeline        = io_pipeline
+                       io_tool_registry   = io_tool_registry
+                       io_memory          = io_memory
+                       io_memory_strategy = io_memory_strategy
+                       it_middlewares     = it_middlewares
+                       iv_max_tool_round  = iv_max_tool_round ).
   ENDMETHOD.
 
   METHOD create_default.
-    ro_agent = create_ollama( iv_model         = 'gemma4:latest'
-                              iv_system_prompt = iv_system_prompt
-                              it_tools         = it_tools ).
+    ro_agent = create_ollama( iv_model           = 'gemma4:latest'
+                              iv_system_prompt   = iv_system_prompt
+                              it_tools           = it_tools
+                              io_pipeline        = io_pipeline
+                              io_tool_registry   = io_tool_registry
+                              io_memory          = io_memory
+                              io_memory_strategy = io_memory_strategy
+                              it_middlewares     = it_middlewares
+                              iv_max_tool_round  = iv_max_tool_round ).
   ENDMETHOD.
 ENDCLASS.
