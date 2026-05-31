@@ -1,4 +1,5 @@
 CLASS zcl_ai_vector_store DEFINITION PUBLIC FINAL CREATE PUBLIC.
+
   PUBLIC SECTION.
     TYPES:
       BEGIN OF ty_s_chunk,
@@ -17,8 +18,14 @@ CLASS zcl_ai_vector_store DEFINITION PUBLIC FINAL CREATE PUBLIC.
       IMPORTING io_embedding TYPE REF TO zif_ai_embedding.
 
     METHODS add
-      IMPORTING iv_text   TYPE string
-                it_vector TYPE zif_ai_embedding=>ty_t_vector OPTIONAL
+      IMPORTING iv_text          TYPE string
+                it_vector        TYPE zif_ai_embedding=>ty_t_vector OPTIONAL
+      RETURNING VALUE(rt_vector) TYPE zif_ai_embedding=>ty_t_vector
+      RAISING   zcx_ai_error.
+
+    METHODS add_batch
+      IMPORTING it_chunks        TYPE ty_t_chunks
+      RETURNING VALUE(rt_chunks) TYPE ty_t_chunks
       RAISING   zcx_ai_error.
 
     METHODS search
@@ -59,6 +66,18 @@ CLASS zcl_ai_vector_store IMPLEMENTATION.
       ls_chunk-vector = mo_embedding->embed( iv_text ).
     ENDIF.
     APPEND ls_chunk TO mt_chunks.
+
+    rt_vector = ls_chunk-vector.
+  ENDMETHOD.
+
+  METHOD add_batch.
+    FIELD-SYMBOLS <fs_chunk> LIKE LINE OF it_chunks.
+
+    LOOP AT it_chunks ASSIGNING <fs_chunk>.
+      APPEND VALUE #( text   = <fs_chunk>-text
+                      vector = add( iv_text   = <fs_chunk>-text
+                                    it_vector = <fs_chunk>-vector ) ) TO rt_chunks.
+    ENDLOOP.
   ENDMETHOD.
 
   METHOD search.
